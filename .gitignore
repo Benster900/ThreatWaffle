@@ -1,0 +1,5 @@
+*.retry
+group_vars/all
+.DS_Store
+*.pyc
+env/
