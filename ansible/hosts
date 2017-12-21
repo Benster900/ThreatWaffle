@@ -1,0 +1,8 @@
+[kolide]
+172.16.77.130 ansible_python_interpreter=/usr/bin/python3
+
+[win_agents]
+
+[linux_agents]
+
+[mac_agents]

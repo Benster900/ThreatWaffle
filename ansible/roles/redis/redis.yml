@@ -1,0 +1,25 @@
+####################################################################
+#  Install/Setup Redis
+####################################################################
+- name: Install/Setup Redis
+  package:
+    name: '{{ item }}'
+    state: latest
+  with_items:
+    - redis-server
+
+- name: Start redis service
+  service:
+    name: redis-server.service
+    state: restarted
+    enabled: yes
+
+####################################################################
+#  Slack notification
+####################################################################
+- name: Send slack notification when done
+  slack:
+    token: "{{ slack_token }}"
+    msg: '{{ ansible_nodename }}:{{ ansible_default_ipv4.address }} - Finished setting up redis - {{ ansible_nodename }}'
+    channel: "{{ slack_channel }}"
+  when: slack_token is undefined

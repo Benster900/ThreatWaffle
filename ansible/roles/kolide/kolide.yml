@@ -1,0 +1,105 @@
+####################################################################
+#  Install/Setup Kolide
+####################################################################
+- name: Create Kolide directory
+  file:
+    path: /etc/kolide
+    state: directory
+    owner: root
+    group: root
+
+- name: Copy Kolide conf
+  template:
+    src: conf/kolide/kolide.yml
+    dest: /etc/kolide/kolide.yml
+    owner: root
+    group: root
+
+- name: Install unzip
+  package:
+    name: unzip
+    state: latest
+
+- name: Download Kolide
+  unarchive:
+    src: https://dl.kolide.co/bin/fleet_latest.zip
+    dest: /usr/local/bin
+    remote_src: yes
+
+- name: Intialize Kolide database
+  shell: /usr/local/bin/linux/fleet_linux_amd64 prepare db --config /etc/kolide/kolide.yml
+
+- name: Create kolide user
+  user:
+    name: kolide
+    shell: /usr/sbin/nologin
+
+- name: Copy Kolide SystemD
+  template:
+    src: conf/kolide/kolide.service
+    dest: /etc/systemd/system/kolide.service
+
+- name: Start Kolide service
+  service:
+    name: kolide
+    state: restarted
+    enabled: yes
+
+####################################################################
+# Install/Setup Nginx
+####################################################################
+- name: Install/Setup Nginx
+  package:
+    name: '{{ item }}'
+    state: latest
+  with_items:
+    - nginx
+
+- name: Backup nginx conf
+  shell: cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
+
+- file:
+    path: /etc/nginx/ssl
+    owner: root
+    group: root
+    state: directory
+
+- file:
+    path: /etc/nginx/ssl
+    state: directory
+    mode: 0400
+
+- name: Copy nginx.conf
+  template:
+    src: conf/nginx/nginx.conf
+    dest:  /etc/nginx/nginx.conf
+
+- name: Copy nginx_kolide.conf
+  template:
+    src: conf/nginx/nginx_kolide.conf
+    dest: /etc/nginx/conf.d/nginx_kolide.conf
+
+- name: Generate DH key
+  stat:
+    path: /etc/nginx/ssl/dhparam.pem
+  register: stat_dhparam
+- shell: openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
+  when: stat_dhparam.stat.exists == False
+- shell: openssl req -new -nodes -x509 -days 3650 -subj "/C={{ cert_country }}/ST={{ cert_state }}/L={{ cert_local }}/O={{ cert_org }}/CN={{ cert_common_name }}" -keyout /etc/nginx/ssl/kolide.key -out /etc/nginx/ssl/kolide.crt
+  when: stat_dhparam.stat.exists == False
+
+- name: Start Nginx service
+  service:
+    name: nginx
+    state: restarted
+    enabled: yes
+
+####################################################################
+# Slack notification
+####################################################################
+- name: Send slack notification when done
+  slack:
+    token: "{{ slack_token }}"
+    msg: '{{ ansible_nodename }}:{{ ansible_default_ipv4.address }} - Finished setting up Kolide Fleet manager - {{ ansible_nodename }}'
+    channel: "{{ slack_channel }}"
+  when: slack_token is undefined

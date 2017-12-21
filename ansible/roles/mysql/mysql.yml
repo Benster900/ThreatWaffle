@@ -1,0 +1,79 @@
+####################################################################
+#  Install/Setup MySQL
+####################################################################
+- name: Install/Setup MySQL
+  package:
+    name: '{{ item }}'
+    state: latest
+  with_items:
+    - mysql-server
+    - python3-mysqldb
+    - python3-pip
+
+#- name: Copy mysql.cnf
+#  tempalte:
+#    src: conf/mysql/mysql.cnf
+#    dest: /etc/mysq/mysql.cnf
+
+- name: Start MySQL service
+  service:
+    name: mysql.service
+    state: restarted
+    enabled: yes
+
+####################################################################
+# Secure MySQL setup
+####################################################################
+- name: delete anonymous MySQL server user
+  action: mysql_user user="" host="{{ ansible_hostname }}" state="absent"
+  ignore_errors: yes
+
+- name: delete anonymous MySQL server user for localhost
+  action: mysql_user user="" state="absent"
+  ignore_errors: yes
+
+- name: remove the MySQL test database
+  action: mysql_db db=test state=absent
+  ignore_errors: yes
+
+- name: Change root user password on first run
+  mysql_user: login_user=root
+              login_password=''
+              name={{ mysql_root_user }}
+              password={{ mysql_root_password }}
+              priv=*.*:ALL,GRANT
+              host={{ item }}
+  with_items:
+    - "{{ ansible_hostname }}"
+    - 127.0.0.1
+    - ::1
+    - localhost
+  ignore_errors: yes
+
+####################################################################
+#  Setup Kolide database
+####################################################################
+- name: Create Kolide database
+  shell: mysql -u {{ mysql_root_user }} --password={{ mysql_root_password }} -e "CREATE DATABASE {{ mysql_kolide_dbname }};"
+  ignore_errors: yes
+
+- name: Create Kolide user
+  mysql_user:
+    name: '{{ mysql_kolide_user }}'
+    password: '{{ mysql_kolide_pass }}'
+    priv: '{{ mysql_kolide_dbname }}.*:ALL'
+    state: present
+    login_user: '{{ mysql_root_user }}'
+    login_password: '{{ mysql_root_password }}'
+    host: '{{ mysql_kolide_hosts }}'
+  ignore_errors: yes
+
+####################################################################
+#  Slack notification
+####################################################################
+- name: Send slack notification when done
+  slack:
+    token: "{{ slack_token }}"
+    msg: '{{ ansible_nodename }}:{{ ansible_default_ipv4.address }} - Finished setting up mysql - {{ ansible_nodename }}'
+    channel: "{{ slack_channel }}"
+  when: slack_token is undefined
