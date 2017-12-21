@@ -4,5 +4,7 @@
 [win_agents]
 
 [linux_agents]
+#172.16.77.184 ansible_python_interpreter=/usr/bin/python3
+172.16.77.185
 
 [mac_agents]

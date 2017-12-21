@@ -1,0 +1,57 @@
+####################################################################
+#  Install/Setup MySQL
+####################################################################
+- name: Add OSQuery repo key for CentOS
+  rpm_key:
+    state: present
+    key: https://pkg.osquery.io/rpm/GPG
+
+- name: Add OSQuery repo for CentOS
+  yum_repository:
+    name: osquery-s3-rpm-repo
+    enabled: yes
+    description: OSQuery repo
+    baseurl: https://pkg.osquery.io/rpm/$basearch/
+    enabled: yes
+    gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-osquery
+    gpgcheck: yes
+
+- name: Install OSQuery
+  package:
+    name: osquery
+    state: installed
+
+- name: Get cert for Doorman
+  shell: python -c "import ssl; print ssl.get_server_certificate(('{{ fleet_hostname }}.{{ base_domain }}', 443))" | sudo tee /etc/osquery/certificate.crt
+
+- name: Copy OSQuery flags file
+  template:
+    src: conf/agents/osquery.flags
+    dest: /etc/osquery/osquery.flags
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Copy OSQuery secret
+  template:
+    src: conf/agents/osquery.key
+    dest: /etc/osquery/osquery.key
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Enable OSQuery service
+  service:
+    name: osqueryd
+    state: restarted
+    enabled: yes
+
+####################################################################
+# Slack notification
+####################################################################
+- name: Send slack notification when done
+  slack:
+    token: "{{ slack_token }}"
+    msg: '{{ ansible_nodename }}:{{ ansible_default_ipv4.address }} - Finished setting OSQuery agent on {{ ansible_nodename }}'
+    channel: "{{ slack_channel }}"
+  when: slack_token is undefined

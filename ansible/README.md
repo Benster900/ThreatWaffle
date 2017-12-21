@@ -18,11 +18,37 @@
     1. Enter username
     1. Enter password
 
-## Setup Windows agents
+## Deploy OSQUery agent on Windows, Linux
+0. Browse to https://<Hostname/IP addr of Kolide>
+0. Select "Add new host" in top right
+0. Select "Reveal secret" and copy the string
+0. vim group_vars/agents
+    1. set osquery_enroll_secret with string from Kolide
 
-## Add OSQuery agents
+### Deploy Windows OSQuery agent
+** Windows hosts must be WinRM ready for Ansible**
+0. vim hosts
+    1. Add hosts to win_agents
+0. ansible-playbook -i hosts deploy_osquery_agent.yml
 
+### Deploy Linux OSQuery agent
+0. vim hosts
+    1. Add hosts to linux_agents
+0. ansible-playbook -i hosts deploy_osquery_agent.yml
 
-## OS support
+### Add OSQuery agents
+0. vim hosts
+    1. Add hosts to mac_agents
+0. ansible-playbook -i hosts deploy_osquery_agent.yml
+
+## Ansible Kolide OS support
 * Ubuntu Server 16.04 64-bit
 * CentOS 7 64-bit (coming soon)
+
+# Resources/Sources
+* https://github.com/kolide/fleet/tree/master/docs
+* https://github.com/kolide/fleet/blob/master/docs/infrastructure/adding-hosts-to-fleet.md
+
+
+To do:
+* Set up Linux and Windows deployment
