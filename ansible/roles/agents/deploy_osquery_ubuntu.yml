@@ -1,5 +1,5 @@
 ####################################################################
-#  Install/Setup MySQL
+#  Install/Setup OSQUery
 ####################################################################
 - name: Add OSQuery repo key for Ubuntu
   apt_key:

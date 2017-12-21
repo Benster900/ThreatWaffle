@@ -1,0 +1,42 @@
+####################################################################
+#  Install/Setup OSQuery
+####################################################################
+- name: Install chocolatey
+  win_shell: Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+
+- name: Install OSQuery with chocolatey
+  win_chocolatey:
+    name: osquery
+    params: InstallService
+    state: latest
+
+- name: Get certificate
+  win_template:
+    src: conf/agents/certificate.crt
+    dest: C:\ProgramData\osquery\certs\certificate.crt
+
+- name: Copy OSQuery.flags
+  win_template:
+    src: conf/agents/osquery.flags
+    dest: C:\ProgramData\osquery\osquery.flags
+
+- name: Copy OSQuery.key
+  win_template:
+    src: conf/agents/osquery.key
+    dest: C:\ProgramData\osquery\osquery.key
+
+- name: Start OSQuery service
+  win_service:
+    name: osqueryd
+    start_mode: auto
+    state: restarted
+
+####################################################################
+# Slack notification
+####################################################################
+- name: Send slack notification when done
+  slack:
+    token: "{{ slack_token }}"
+    msg: '{{ ansible_nodename }}:{{ ansible_default_ipv4.address }} - Finished setting OSQuery agent on {{ ansible_nodename }}'
+    channel: "{{ slack_channel }}"
+  when: slack_token is undefined

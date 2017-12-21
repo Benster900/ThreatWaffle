@@ -1,5 +1,10 @@
---enroll_secret_path=/etc/osquery/osquery.key
+{% if ansible_os_family == "Linux" %}
 --tls_server_certs=/etc/osquery/certificate.crt
+--enroll_secret_path=/etc/osquery/osquery.key
+{% else %}
+--tls_server_certs=C:\ProgramData\osquery\certs\certificate.crt
+--enroll_secret_path=C:\ProgramData\osquery\osquery.key
+{% endif %}
 --tls_hostname={{ fleet_hostname }}.{{ base_domain }}:443
 --host_identifier=hostname
 --enroll_tls_endpoint=/api/v1/osquery/enroll

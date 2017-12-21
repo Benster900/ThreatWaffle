@@ -1,0 +1,4 @@
+- hosts: win_agents
+  tasks:
+    - include_vars: group_vars/agents
+    - import_tasks: roles/agents/deploy_osquery_windows.yml

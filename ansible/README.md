@@ -27,19 +27,23 @@
 
 ### Deploy Windows OSQuery agent
 ** Windows hosts must be WinRM ready for Ansible**
+0. Copy contents of /etc/nginx/ssl/kolide.crt
+0. mv conf/agents/certificate.example conf/agents/certificate.crt
+0. mv group_vars/win_agents.example group_vars/win_agents
+0. vim group_vars/win_agents and set:
+    1. ansible_user
+    1. ansible_password
 0. vim hosts
     1. Add hosts to win_agents
-0. ansible-playbook -i hosts deploy_osquery_agent.yml
+0. ansible-playbook -i hosts deploy_windows_osquery_agents.yml
 
 ### Deploy Linux OSQuery agent
 0. vim hosts
     1. Add hosts to linux_agents
-0. ansible-playbook -i hosts deploy_osquery_agent.yml
+0.ansible-playbook -i hosts deploy_linux_osquery_agents.yml
 
-### Add OSQuery agents
-0. vim hosts
-    1. Add hosts to mac_agents
-0. ansible-playbook -i hosts deploy_osquery_agent.yml
+### Deploy Mac OSX OSQuery agents
+Coming soon
 
 ## Ansible Kolide OS support
 * Ubuntu Server 16.04 64-bit
@@ -51,4 +55,4 @@
 
 
 To do:
-* Set up Linux and Windows deployment
+* Set up Mac OSX deployment

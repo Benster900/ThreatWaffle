@@ -2,9 +2,10 @@
 172.16.77.130 ansible_python_interpreter=/usr/bin/python3
 
 [win_agents]
+172.16.77.182
 
 [linux_agents]
 #172.16.77.184 ansible_python_interpreter=/usr/bin/python3
-172.16.77.185
+#172.16.77.185
 
 [mac_agents]
