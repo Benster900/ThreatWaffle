@@ -1,0 +1,17 @@
+####################################################################
+#  Set Primary DNS server
+####################################################################
+- win_dns_client:
+    adapter_names: "*"
+    ipv4_addresses:
+    - '{{ dns_ip }}'
+
+####################################################################
+#  Slack notification
+####################################################################
+- name: Send slack notification when done
+  slack:
+    token: "{{ slack_token }}"
+    msg: '{{ ansible_nodename }}:{{ ansible_default_ipv4.address }} - Set Primary - {{ ansible_nodename }}'
+    channel: "{{ slack_channel }}"
+  when: slack_token is undefined

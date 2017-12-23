@@ -1,0 +1,5 @@
+- hosts: graylog
+  become: yes
+  become_user: root
+  tasks:
+    - import_tasks : 'roles/graylog/deploy_graylog.yml'

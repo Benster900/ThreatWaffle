@@ -1,0 +1,24 @@
+####################################################################
+#  Join Windows client to domain
+####################################################################
+- name: Join windows host to {{ ad_domain_name }} domain
+  win_domain_membership:
+    dns_domain_name: '{{ ad_domain_name }}'
+    hostname: '{{ ansible_hostname }}'
+    domain_admin_user: 'administrator@{{ ad_domain_name }}'
+    domain_admin_password: '{{ ad_safe_mode_password }}'
+    state: domain
+  register: domain_state
+
+- win_reboot:
+  when: domain_state.reboot_required
+
+####################################################################
+#  Slack notification
+####################################################################
+- name: Send slack notification when done
+  slack:
+    token: "{{ slack_token }}"
+    msg: '{{ ansible_nodename }}:{{ ansible_default_ipv4.address }} - Joined {{ ad_domain_name }} domain  - {{ ansible_nodename }}'
+    channel: "{{ slack_channel }}"
+  when: slack_token is undefined

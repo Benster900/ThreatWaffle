@@ -1,0 +1,29 @@
+####################################################################
+#  Promote Windows Server to Domain controller
+####################################################################
+- name: Install AD-Domain-Services feature
+  win_feature:
+    name: 'AD-Domain-Services'
+    include_management_tools: True
+    include_sub_features: True
+    state: present
+
+- name: Promote to domain controller
+  win_domain:
+    dns_domain_name: '{{ ad_domain_name }}'
+    safe_mode_password: '{{ ad_safe_mode_password }}'
+  register: active_directory_controllers
+
+- name: reboot once DC created
+  win_reboot:
+  when: active_directory_controllers.reboot_required
+
+####################################################################
+#  Slack notification
+####################################################################
+- name: Send slack notification when done
+  slack:
+    token: "{{ slack_token }}"
+    msg: '{{ ansible_nodename }}:{{ ansible_default_ipv4.address }} - Promoted {{ ansible_nodename }} to domain controller of {{ ad_domain_name }} domain'
+    channel: "{{ slack_channel }}"
+  when: slack_token is undefined

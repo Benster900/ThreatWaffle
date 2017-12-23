@@ -1,5 +1,6 @@
 base_domain:
 fleet_hostname:
+graylog_hostname:
 timezone: America/New_York
 
 slack_channel:

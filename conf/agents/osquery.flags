@@ -6,7 +6,7 @@
 --enroll_secret_path=C:\ProgramData\osquery\osquery.key
 {% endif %}
 --tls_hostname={{ fleet_hostname }}.{{ base_domain }}:443
---host_identifier=hostname
+--host_identifier=uuid
 --enroll_tls_endpoint=/api/v1/osquery/enroll
 --config_plugin=tls
 --config_tls_endpoint=/api/v1/osquery/config

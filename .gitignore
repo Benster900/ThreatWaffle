@@ -1,6 +1,12 @@
 *.retry
-ansible/group_vars/all
+group_vars/all
+group_vars/kolide
+group_vars/agents
+group_vars/win_agents
+group_vars/graylog
+group_vars/win_dc
+group_vars/windows
+conf/agents/certificate.crt
 .DS_Store
 *.pyc
 env/
-ansible/group_vars/kolide

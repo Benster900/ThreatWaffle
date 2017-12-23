@@ -1,0 +1,229 @@
+####################################################################
+# Setup hostname
+####################################################################
+- name: Set hostname
+  hostname:
+    name: '{{ graylog_hostname }}.{{ base_domain }}'
+
+####################################################################
+#  Setup Timedatectl
+####################################################################
+- name: Set time to {{ timezone }}
+  shell: timedatectl set-ntp on && timedatectl set-timezone {{ timezone }}
+
+####################################################################
+# Apt update
+####################################################################
+- name: Run the equivalent of "apt-get update" as a separate step
+  apt:
+    update_cache: yes
+
+####################################################################
+# Install software
+####################################################################
+- name: Install software
+  package:
+    name: '{{ item }}'
+    state: latest
+  with_items:
+    - apt-transport-https
+    - openjdk-8-jre-headless
+    - uuid-runtime
+    - pwgen
+
+####################################################################
+# Install/Setup MongoDB
+####################################################################
+- name: Install MongoDB
+  package:
+    name: '{{ item }}'
+    state: latest
+  with_items:
+    - mongodb-server
+
+- name: Start Mongo service
+  service:
+    name: mongodb
+    state: started
+    enabled: yes
+
+####################################################################
+# Install/Setup Elasticsearch
+####################################################################
+- name: Add Elastic GPG key
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Add Elastic repo
+  apt_repository:
+    repo: deb https://artifacts.elastic.co/packages/5.x/apt stable main
+    state: present
+
+- name: Install/Setup Elasticsearch
+  package:
+    name: '{{ item }}'
+    state: latest
+  with_items:
+    - curl
+    - elasticsearch
+
+- name: Rename Elasticsearch cluster name
+  lineinfile:
+    path: /etc/elasticsearch/elasticsearch.yml
+    regexp: '^cluster.name:'
+    line: 'cluster.name: graylog'
+
+- service:
+    name: elasticsearch
+    state: restarted
+    enabled: yes
+
+####################################################################
+# Install/Setup Graylog
+####################################################################
+- name: Download and Install Graylog repo
+  apt:
+    deb: https://packages.graylog2.org/repo/packages/graylog-2.4-repository_latest.deb
+
+- name: Run the equivalent of "apt-get update" as a separate step
+  apt:
+    update_cache: yes
+
+- name: Install/Setup Graylog
+  package:
+    name: '{{ item }}'
+    state: latest
+  with_items:
+    - graylog-server
+
+- name: Covert password to sha256 hash
+  shell: "echo -n {{ graylog_admin_password }} | sha256sum | awk '{print $1}'"
+  register: pass_contents
+
+- name: Set admin password
+  lineinfile:
+    path: /etc/graylog/server/server.conf
+    regexp: '^root_password_sha2 ='
+    line: "root_password_sha2 = {{ pass_contents.stdout }}"
+
+- name: Generate secret key
+  shell: "pwgen -s 96 1"
+  register: secret_key_content
+
+- name: Set secret key
+  shell: sed -i -e "s/password_secret =.*/password_secret = {{ secret_key_content.stdout }}/" /etc/graylog/server/server.conf
+
+- name: Start and Enable Graylog service
+  service:
+    name: graylog-server
+    state: restarted
+    enabled: yes
+
+####################################################################
+# Install/Setup Graylog slack plugin
+####################################################################
+- name: Download Graylog Slack plugin
+  get_url:
+    url: https://github.com/graylog-labs/graylog-plugin-slack/releases/download/2.4.0/graylog-plugin-slack-2.4.0.jar
+    dest: /usr/share/graylog-server/plugin/graylog-plugin-slack-2.4.0.jar
+
+- name: Start and Enable Graylog service
+  service:
+    name: graylog-server
+    state: restarted
+    enabled: yes
+
+####################################################################
+# Install/Setup Nginx
+####################################################################
+- name: Install/Setup Nginx
+  package:
+    name: '{{ item }}'
+    state: installed
+  with_items:
+    - nginx
+
+- name: Backup NGINX config
+  shell: cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
+
+- name: Copy Nginx config
+  template:
+    src: conf/nginx/nginx.conf
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0600'
+
+- file:
+    path: /etc/nginx/ssl
+    owner: root
+    group: root
+    state: directory
+
+- file:
+    path: /etc/nginx/ssl
+    state: directory
+    mode: 0755
+
+- name: Generate DH key
+  stat:
+    path: /etc/ssl/certs/dhparam.pem
+  register: stat_dhparam
+- shell: openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
+  when: stat_dhparam.stat.exists == False
+
+- name: Generate DH key
+  stat:
+    path: /etc/nginx/ssl/dhparam.pem
+  register: stat_dhparam
+- shell: openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
+  when: stat_dhparam.stat.exists == False
+- shell: openssl req -new -nodes -x509 -days 3650 -subj "/C={{ cert_country }}/ST={{ cert_state }}/L={{ cert_local }}/O={{ cert_org }}/CN={{ cert_common_name }}" -keyout /etc/nginx/ssl/graylog.key -out /etc/nginx/ssl/graylog.crt
+  when: stat_dhparam.stat.exists == False
+
+- template:
+    src: conf/nginx/nginx_graylog.conf
+    dest: /etc/nginx/conf.d/nginx_graylog.conf
+    owner: root
+    group: root
+    mode: '0600'
+
+- service:
+    name: nginx
+    state: restarted
+    enabled: yes
+
+####################################################################
+# Install/Setup FirewallD
+####################################################################
+- name: Setup Ubuntu UFW firewall
+  ufw:
+    rule: allow
+    name: OpenSSH
+- ufw:
+    rule: allow
+    port: 80
+    proto: tcp
+- ufw:
+    rule: allow
+    port: 443
+    proto: tcp
+- ufw:
+    rule: allow
+    port: 5044
+    proto: tcp
+- ufw:
+    state: enabled
+    policy: deny
+
+
+####################################################################
+#  Slack notification
+####################################################################
+- name: Send slack notification when done
+  slack:
+    token: "{{ slack_token }}"
+    msg: '{{ ansible_nodename }}:{{ ansible_default_ipv4.address }} - Finished setting up Graylog server on {{ ansible_nodename }}'
+    channel: "{{ slack_channel }}"
+  when: slack_token is undefined

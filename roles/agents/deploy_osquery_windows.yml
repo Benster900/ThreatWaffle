@@ -7,7 +7,7 @@
 - name: Install OSQuery with chocolatey
   win_chocolatey:
     name: osquery
-    params: InstallService
+    params: "/InstallService"
     state: latest
 
 - name: Get certificate
