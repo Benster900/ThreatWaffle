@@ -1,0 +1,8 @@
+doorman_postgresql_user: doorman
+doorman_postgresql_pass: <password>
+doorman_postgresql_db: doorman
+
+doorman_webgui_user: admin
+doorman_webgui_pass: <password>
+doorman_sqlalchemy_database_uri: postgresql://{{ doorman_postgresql_user }}:{{ doorman_postgresql_pass }}@127.0.0.1:5432/{{ doorman_postgresql_db }}
+doorman_redis_uri: redis://localhost:6379/0

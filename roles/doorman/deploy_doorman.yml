@@ -1,0 +1,181 @@
+####################################################################
+# Install Python module for Ansible
+####################################################################
+- pip:
+    name={{ item }}
+    executable: pip3
+  with_items:
+    - psycopg2
+
+####################################################################
+# Create doorman user
+####################################################################
+- name: Create doorman unix user
+  user:
+    name: doorman
+
+####################################################################
+# Install/Setup Doorman
+####################################################################
+- name: Install/Setup Doorman
+  package:
+    name: '{{ item }}'
+    state: latest
+  with_items:
+    - python3-pip
+    - python3-devel
+    - libffi-devel
+    - gcc
+    - postgresql-devel
+    - nodejs
+- shell: pip install --upgrade pip
+
+- name: Download Doorman repo
+  git:
+    repo: https://github.com/mwielgoszewski/doorman.git
+    dest: /opt/doorman
+  ignore_errors: True
+
+- name: Install virtualenv and pexpect
+  pip:
+    name: "{{ item }}"
+    executable: pip3
+  with_items:
+    - virtualenv
+    - pexpect
+
+- name: Create virtualenv as Doorman user
+  command: cd /opt/doorman && virtualenv env
+  become: true
+  become_user: doorman
+
+- name: Install Python modules for Doorman
+  pip:
+    requirements: /opt/doorman/requirements.txt
+    virtualenv: /opt/doorman/env
+- pip:
+    name: '{{ item }}'
+    virtualenv: /opt/doorman/env
+  with_items:
+    - uwsgi
+    - flask
+
+- name: Chown doorman directory to doorman user
+  file:
+    path: /opt/doorman
+    owner: doorman
+    group: doorman
+    state: directory
+    recurse: yes
+
+- name: Create Doorman logging directory
+  file:
+    path: /var/log/doorman
+    owner: doorman
+    group: doorman
+    state: directory
+    recurse: yes
+
+- name: Copy Doorman settings.py config
+  template:
+    src: conf/doorman/settings.py
+    dest: /opt/doorman/doorman/settings.py
+    owner: doorman
+    group: doorman
+    mode: 0644
+
+- name: Copy Doorman uwsgi config
+  template:
+    src: conf/doorman/doorman.ini
+    dest: /opt/doorman/doorman.ini
+    owner: doorman
+    group: doorman
+    mode: 0644
+
+- name: Set env var to production
+  lineinfile:
+    dest: /etc/profile
+    line: export DOORMAN_ENV=prod
+- shell: "echo $DOORMAN_ENV"
+
+- name: Initialize doorman env variables
+  become: true
+  become_method: su
+  become_user: doorman
+  shell: |
+    export DOORMAN_ENV={{ doorman_mode }}
+    source env/bin/activate
+    python manage.py db upgrade
+    exit 0
+  args:
+    chdir: /opt/doorman
+
+- name: Add Doorman local user
+  expect:
+    command: "env/bin/python manage.py adduser {{ doorman_webgui_user }}"
+    responses:
+      (?i)Password*: "{{ doorman_webgui_pass }}"
+    chdir: /opt/doorman
+  become: yes
+  become_method: su
+  become_user: doorman
+  ignore_errors: True
+
+- name: Install nodejs components
+  npm:
+    name: "{{ item }}"
+    global: yes
+  with_items:
+    - bower
+    - less
+
+- name: Install bower components
+  bower:
+    path: /opt/doorman
+
+####################################################################
+# Install/Setup Nginx + wsgi/flask + OpenSSL
+####################################################################
+- name: Check if cert exists already
+  stat:
+    path: /etc/nginx/ssl/certificate.crt
+  register: stat_cert
+
+- name: Create OpenSSL custom cert for Doorman
+  shell: openssl req -new -nodes -x509 -days 3650 -subj "/C={{ cert_country }}/ST={{ cert_state }}/L={{ cert_local }}/O={{ cert_org }}/CN={{ cert_common_name }}" -keyout /etc/nginx/ssl/private.key -out /etc/nginx/ssl/certificate.crt
+  when: stat_cert.stat.exists == False
+
+- template:
+    src: conf/doorman/nginx_doorman.conf
+    dest: /etc/nginx/conf.d/nginx_doorman.conf
+    owner: root
+    group: root
+    mode: '0600'
+- template:
+    src: conf/doorman/doorman.service
+    dest: /etc/systemd/system/doorman.service
+    owner: root
+    group: root
+    mode: '0600'
+
+####################################################################
+# Restart Nginx and doorman service
+####################################################################
+- name: Start Nginx and Doorman service
+  service:
+    name: '{{ item }}'
+    state: restarted
+    enabled: yes
+  with_items:
+    - doorman
+    - nginx
+
+####################################################################
+#  Slack notification
+####################################################################
+- name: Send slack notification when done
+  slack:
+    token: "{{ slack_token }}"
+    msg: '{{ ansible_nodename }}:{{ ansible_default_ipv4.address }} - Finished setting up Doorman - {{ ansible_nodename }}'
+    channel: "{{ slack_channel }}"
+  when: slack_token is undefined

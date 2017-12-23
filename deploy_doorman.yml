@@ -1,0 +1,10 @@
+- hosts: doorman
+  become: yes
+  become_method: sudo
+  tasks:
+    - import_tasks: roles/init.yml
+    - import_tasks: roles/doorman/deploy_psotgres.yml
+    - import_tasks: roles/doorman/deploy_redis.yml
+    - import_tasks: roles/doorman/deploy_doorman.yml
+      environment:
+        DOORMAN_ENV: prod

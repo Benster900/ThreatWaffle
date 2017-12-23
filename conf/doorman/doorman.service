@@ -1,0 +1,14 @@
+[Unit]
+Description=uWSGI instance to serve Doorman
+After=network.target
+
+[Service]
+User=doorman
+Group=nginx
+
+WorkingDirectory=/opt/doorman
+Environment="PATH=/opt/doorman/env/bin:/usr/bin"
+ExecStart=/opt/doorman/env/bin/uwsgi --ini doorman.ini
+
+[Install]
+WantedBy=multi-user.target

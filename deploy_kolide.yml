@@ -1,8 +1,0 @@
-- hosts: kolide
-  become: yes
-  become_user: root
-  tasks:
-    - import_tasks: roles/init.yml
-    - import_tasks: roles/redis/redis.yml
-    - import_tasks: roles/mysql/mysql.yml
-    - import_tasks: roles/kolide/kolide.yml

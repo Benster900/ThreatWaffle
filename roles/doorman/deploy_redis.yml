@@ -1,16 +1,16 @@
 ####################################################################
-#  Install/Setup Redis
+# Install/Setup Redis
 ####################################################################
 - name: Install/Setup Redis
   package:
     name: '{{ item }}'
     state: latest
   with_items:
-    - redis-server
+    - redis
 
-- name: Start redis service
+- name: Start Redis service
   service:
-    name: redis-server.service
+    name: redis
     state: restarted
     enabled: yes
 
@@ -20,6 +20,6 @@
 - name: Send slack notification when done
   slack:
     token: "{{ slack_token }}"
-    msg: '{{ ansible_nodename }}:{{ ansible_default_ipv4.address }} - Finished setting up redis - {{ ansible_nodename }}'
+    msg: '{{ ansible_nodename }}:{{ ansible_default_ipv4.address }} - Finished setting up Redis for Doorman - {{ ansible_nodename }}'
     channel: "{{ slack_channel }}"
   when: slack_token is undefined

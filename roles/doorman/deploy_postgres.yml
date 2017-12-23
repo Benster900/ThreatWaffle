@@ -1,0 +1,83 @@
+####################################################################
+# Install/Setup Postgres add user and database for Doorman
+####################################################################
+- name: APT add Postgresql GPG key
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: APT add Postgresql repo
+  apt_repository:
+    repo: deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main
+    state: present
+
+- name: Run the equivalent of "apt-get update" as a separate step
+  apt:
+    update_cache: yes
+
+- name: Install/Setup Postgres 9.6
+  package:
+    name: '{{ item }}'
+    state: latest
+  with_items:
+    - postgresql-9.6
+    - postgresql-client-9.6
+    - postgresql-contrib-9.6
+
+- name: Init Postgres DB
+  shell: "initdb"
+  become: true
+  become_user: postgres
+  become_method: su
+  ignore_errors: True
+
+- name: Change Postgres user auth
+  lineinfile:
+    path: /var/lib/pgsql/9.6/data/pg_hba.conf
+    regexp: '^host    all             all             127.0.0.1/32            ident'
+    line: 'host    all             all             127.0.0.1/32            md5'
+
+- name: Start Postgres 9.6 server
+  service:
+    name: postgresql-9.6
+    state: restarted
+    enabled: yes
+
+- name: Create Postgres database for Doorman
+  postgresql_db:
+    state: present
+    name: '{{ doorman_postgresql_db }}'
+    login_user: postgres
+  become: true
+  become_user: postgres
+  become_method: su
+
+- name: Create Postgres user for Doorman
+  postgresql_user:
+    state: present
+    db: '{{ doorman_postgresql_db }}'
+    name: '{{ doorman_postgresql_user }}'
+    password: "{{ doorman_postgresql_pass }}"
+    priv: 'ALL'
+    login_user: postgres
+  become: true
+  become_user: postgres
+
+- name: Ensure Doorman user has access to database
+  postgresql_user:
+    name: '{{ doorman_postgresql_user }}'
+    db: '{{ doorman_postgresql_db }}'
+    password: "{{ doorman_postgresql_pass }}"
+    priv: 'ALL'
+  become: true
+  become_user: postgres
+
+####################################################################
+#  Slack notification
+####################################################################
+- name: Send slack notification when done
+  slack:
+    token: "{{ slack_token }}"
+    msg: '{{ ansible_nodename }}:{{ ansible_default_ipv4.address }} - Finished setting up Postgres for Doorman - {{ ansible_nodename }}'
+    channel: "{{ slack_channel }}"
+  when: slack_token is undefined
