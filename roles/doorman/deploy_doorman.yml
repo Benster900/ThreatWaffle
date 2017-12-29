@@ -1,13 +1,4 @@
 ####################################################################
-# Install Python module for Ansible
-####################################################################
-- pip:
-    name={{ item }}
-    executable: pip3
-  with_items:
-    - psycopg2
-
-####################################################################
 # Create doorman user
 ####################################################################
 - name: Create doorman unix user
@@ -23,18 +14,34 @@
     state: latest
   with_items:
     - python3-pip
-    - python3-devel
-    - libffi-devel
+    - python3-dev
+    - libffi-dev
     - gcc
-    - postgresql-devel
+    - postgresql-server-dev-9.6
     - nodejs
-- shell: pip install --upgrade pip
+    - uwsgi
+    - uwsgi-plugin-python3
+    - npm
+
+- name: Update Pip
+  pip:
+    name: pip
+    executable: pip3
+    extra_args: --upgrade
 
 - name: Download Doorman repo
   git:
     repo: https://github.com/mwielgoszewski/doorman.git
     dest: /opt/doorman
   ignore_errors: True
+
+- name: Chown doorman directory to doorman user
+  file:
+    path: /opt/doorman
+    owner: doorman
+    group: doorman
+    state: directory
+    recurse: yes
 
 - name: Install virtualenv and pexpect
   pip:
@@ -44,21 +51,20 @@
     - virtualenv
     - pexpect
 
-- name: Create virtualenv as Doorman user
-  command: cd /opt/doorman && virtualenv env
-  become: true
-  become_user: doorman
-
-- name: Install Python modules for Doorman
+- name: Create virtualenv as Doorman user and install requirements
   pip:
     requirements: /opt/doorman/requirements.txt
     virtualenv: /opt/doorman/env
+    virtualenv_python: python3.5
+  become: true
+  become_user: doorman
 - pip:
     name: '{{ item }}'
     virtualenv: /opt/doorman/env
   with_items:
-    - uwsgi
     - flask
+  become: true
+  become_user: doorman
 
 - name: Chown doorman directory to doorman user
   file:
@@ -99,16 +105,14 @@
 - shell: "echo $DOORMAN_ENV"
 
 - name: Initialize doorman env variables
-  become: true
-  become_method: su
-  become_user: doorman
-  shell: |
-    export DOORMAN_ENV={{ doorman_mode }}
-    source env/bin/activate
-    python manage.py db upgrade
-    exit 0
+  shell: env/bin/python manage.py db upgrade
   args:
     chdir: /opt/doorman
+  become: true
+  become_user: doorman
+  become_method: sudo
+  environment:
+    DOORMAN_ENV: '{{ doorman_mode }}'
 
 - name: Add Doorman local user
   expect:
@@ -116,10 +120,13 @@
     responses:
       (?i)Password*: "{{ doorman_webgui_pass }}"
     chdir: /opt/doorman
-  become: yes
-  become_method: su
+  become: true
   become_user: doorman
-  ignore_errors: True
+  become_method: sudo
+  environment:
+    DOORMAN_ENV: '{{ doorman_mode }}'
+  register: fail_me
+  failed_when: "'Username already exists' not in fail_me.stdout"
 
 - name: Install nodejs components
   npm:
@@ -129,28 +136,65 @@
     - bower
     - less
 
+- name: Create sym link
+  file:
+    src: /usr/bin/nodejs
+    dest: /usr/bin/node
+    owner: doorman
+    group: doorman
+    state: link
+
 - name: Install bower components
   bower:
     path: /opt/doorman
+  become: true
+  become_user: doorman
+  become_method: sudo
+
+- name: Set correct path for interact.js
+  lineinfile:
+    regexp: '^libs/interact/interact.js'
+    line: 'libs/interact/src/interact.js'
 
 ####################################################################
 # Install/Setup Nginx + wsgi/flask + OpenSSL
 ####################################################################
-- name: Check if cert exists already
+- name: Install Nginx
+  package:
+    name: '{{ item }}'
+    state: latest
+  with_items:
+    - nginx
+
+- name: Backup NGINX config
+  shell: cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
+
+- name: Create NGINX SSL directory
+  file:
+    path: /etc/nginx/ssl
+    state: directory
+    owner: root
+    group: root
+    mode: 0600
+
+- name: Generate DH key
   stat:
-    path: /etc/nginx/ssl/certificate.crt
-  register: stat_cert
+    path: /etc/nginx/ssl/dhparam.pem
+  register: stat_dhparam
+- shell: openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
+  when: stat_dhparam.stat.exists == False
 
 - name: Create OpenSSL custom cert for Doorman
-  shell: openssl req -new -nodes -x509 -days 3650 -subj "/C={{ cert_country }}/ST={{ cert_state }}/L={{ cert_local }}/O={{ cert_org }}/CN={{ cert_common_name }}" -keyout /etc/nginx/ssl/private.key -out /etc/nginx/ssl/certificate.crt
-  when: stat_cert.stat.exists == False
+  shell: openssl req -new -nodes -x509 -days 3650 -subj "/C={{ cert_country }}/ST={{ cert_state }}/L={{ cert_local }}/O={{ cert_org }}/CN={{ doorman_hostname }}.{{ base_domain }}" -keyout /etc/nginx/ssl/private.key -out /etc/nginx/ssl/certificate.crt
+  when: stat_dhparam.stat.exists == False
 
 - template:
-    src: conf/doorman/nginx_doorman.conf
+    src: conf/nginx/nginx_doorman.conf
     dest: /etc/nginx/conf.d/nginx_doorman.conf
     owner: root
     group: root
     mode: '0600'
+
 - template:
     src: conf/doorman/doorman.service
     dest: /etc/systemd/system/doorman.service

@@ -4,11 +4,11 @@ After=network.target
 
 [Service]
 User=doorman
-Group=nginx
+Group=www-data
 
 WorkingDirectory=/opt/doorman
-Environment="PATH=/opt/doorman/env/bin:/usr/bin"
-ExecStart=/opt/doorman/env/bin/uwsgi --ini doorman.ini
+Environment="PATH=/opt/doorman/env/bin:/usr/local/bin:/usr/bin"
+ExecStart=/usr/bin/uwsgi_python3 --ini doorman.ini
 
 [Install]
 WantedBy=multi-user.target

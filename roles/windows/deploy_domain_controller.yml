@@ -1,12 +1,14 @@
 ####################################################################
 #  Promote Windows Server to Domain controller
 ####################################################################
-- name: Install AD-Domain-Services feature
+- name: Install AD Domain Services
   win_feature:
     name: 'AD-Domain-Services'
-    include_management_tools: True
-    include_sub_features: True
     state: present
+    #reboot_required: True
+    #restart_needed: True
+    include_management_tools: yes
+    include_sub_features: yes
 
 - name: Promote to domain controller
   win_domain:

@@ -23,23 +23,17 @@
     - postgresql-9.6
     - postgresql-client-9.6
     - postgresql-contrib-9.6
-
-- name: Init Postgres DB
-  shell: "initdb"
-  become: true
-  become_user: postgres
-  become_method: su
-  ignore_errors: True
+    - python3-psycopg2
 
 - name: Change Postgres user auth
   lineinfile:
-    path: /var/lib/pgsql/9.6/data/pg_hba.conf
+    path: /etc/postgresql/9.6/main/pg_hba.conf
     regexp: '^host    all             all             127.0.0.1/32            ident'
     line: 'host    all             all             127.0.0.1/32            md5'
 
 - name: Start Postgres 9.6 server
   service:
-    name: postgresql-9.6
+    name: postgresql@9.6-main.service
     state: restarted
     enabled: yes
 
@@ -50,7 +44,7 @@
     login_user: postgres
   become: true
   become_user: postgres
-  become_method: su
+  become_method: sudo
 
 - name: Create Postgres user for Doorman
   postgresql_user:

@@ -1,8 +1,1 @@
 graylog_admin_password:
-
-# Graylog cert Generation
-cert_country: US
-cert_state: NY
-cert_local: Rochester
-cert_org: hackinglab.beer
-cert_common_name: '{{ graylog_hostname }}.{{ base_domain }}'

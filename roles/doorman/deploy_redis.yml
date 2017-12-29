@@ -6,7 +6,7 @@
     name: '{{ item }}'
     state: latest
   with_items:
-    - redis
+    - redis-server
 
 - name: Start Redis service
   service:

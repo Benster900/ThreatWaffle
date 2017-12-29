@@ -5,3 +5,12 @@ timezone: America/New_York
 
 slack_channel:
 slack_token:
+
+# Cert Generation
+cert_country: US
+cert_state: NY
+cert_local: Rochester
+cert_org: hackinglab.beer
+
+slack_channel:
+slack_token:

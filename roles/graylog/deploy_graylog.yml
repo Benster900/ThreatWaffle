@@ -179,7 +179,7 @@
   register: stat_dhparam
 - shell: openssl dhparam -out /etc/nginx/ssl/dhparam.pem 2048
   when: stat_dhparam.stat.exists == False
-- shell: openssl req -new -nodes -x509 -days 3650 -subj "/C={{ cert_country }}/ST={{ cert_state }}/L={{ cert_local }}/O={{ cert_org }}/CN={{ cert_common_name }}" -keyout /etc/nginx/ssl/graylog.key -out /etc/nginx/ssl/graylog.crt
+- shell: openssl req -new -nodes -x509 -days 3650 -subj "/C={{ cert_country }}/ST={{ cert_state }}/L={{ cert_local }}/O={{ cert_org }}/CN={{ graylog_hostname }}.{{ base_domain }}" -keyout /etc/nginx/ssl/graylog.key -out /etc/nginx/ssl/graylog.crt
   when: stat_dhparam.stat.exists == False
 
 - template:

@@ -1,17 +1,12 @@
+# Doorman
 doorman_mode: prod
-doorman_hostname: doorman
 doorman_postgresql_user: doorman
 doorman_postgresql_pass: password123
 doorman_postgresql_db: doorman
+
+doorman_secret_key: 6yn8yh5BkQrcFa5mSz9A5/lxwabacxC7VkYYsR3ohIo=
 
 doorman_webgui_user: admin
 doorman_webgui_pass: password123
 doorman_sqlalchemy_database_uri: postgresql://{{ doorman_postgresql_user }}:{{ doorman_postgresql_pass }}@127.0.0.1:5432/{{ doorman_postgresql_db }}
 doorman_redis_uri: redis://localhost:6379/0
-
-# Doorman cert Generation
-cert_country: US
-cert_state: NY
-cert_local: Rochester
-cert_org: hackinglab.beer
-cert_common_name: '{{ doorman_hostname }}.{{ base_domain }}'
