@@ -1,5 +1,6 @@
 - hosts: win_agents
   tasks:
+    - win_ping:
     - include_vars: group_vars/agents
     - import_tasks: roles/windows/deploy_dns.yml
     - import_tasks: roles/agents/deploy_osquery_windows.yml

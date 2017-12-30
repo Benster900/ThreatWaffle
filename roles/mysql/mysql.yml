@@ -10,11 +10,6 @@
     - python3-mysqldb
     - python3-pip
 
-#- name: Copy mysql.cnf
-#  tempalte:
-#    src: conf/mysql/mysql.cnf
-#    dest: /etc/mysq/mysql.cnf
-
 - name: Start MySQL service
   service:
     name: mysql.service
@@ -50,12 +45,15 @@
     - localhost
   ignore_errors: yes
 
+
 ####################################################################
 #  Setup Kolide database
 ####################################################################
 - name: Create Kolide database
   shell: mysql -u {{ mysql_root_user }} --password={{ mysql_root_password }} -e "CREATE DATABASE {{ mysql_kolide_dbname }};"
   ignore_errors: yes
+  register: mysql_result
+  failed_when: "'database exists' in mysql_result.stdout"
 
 - name: Create Kolide user
   mysql_user:
