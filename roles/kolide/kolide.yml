@@ -1,7 +1,14 @@
 ####################################################################
 #  Install/Setup Kolide
 ####################################################################
-- name: Create Kolide directory
+- name: Create Kolide log directory
+  file:
+    path: '{{ log_dir }}'
+    state: directory
+    owner: kolide
+    group: kolide
+
+- name: Create Kolide conf directory
   file:
     path: /etc/kolide
     state: directory

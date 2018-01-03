@@ -1,0 +1,40 @@
+####################################################################
+# Install/Setup Filebeat
+####################################################################
+- name: Add Elastic GPG key
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Add Elastic repo
+  apt_repository:
+    repo: deb https://artifacts.elastic.co/packages/5.x/apt stable main
+    state: present
+
+- name: Install/Setup Elasticsearch
+  package:
+    name: '{{ item }}'
+    state: latest
+  with_items:
+    - filebeat
+
+- name: Filebeat.yml
+  template:
+    src: conf/filebeat/filebeat.yml
+    dest: /etc/filebeat/filebeat.yml
+
+- name: Start Filebeat service
+  service:
+    name: filebeat
+    state: restarted
+    enabled: yes
+
+####################################################################
+# Slack notification
+####################################################################
+- name: Send slack notification when done
+  slack:
+    token: "{{ slack_token }}"
+    msg: '{{ ansible_nodename }}:{{ ansible_default_ipv4.address }} - Finished setting up Kolide Fleet manager - {{ ansible_nodename }}'
+    channel: "{{ slack_channel }}"
+  when: slack_token is undefined

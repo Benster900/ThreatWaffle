@@ -6,3 +6,5 @@
     - import_tasks: roles/redis/redis.yml
     - import_tasks: roles/mysql/mysql.yml
     - import_tasks: roles/kolide/kolide.yml
+    - import_tasks: roles/filebeat/filebeat.yml
+    

@@ -9,6 +9,9 @@ This folder contains scripts that are used to simulate red team activity.
 0. ./setup/install.sh
 0. ./empire --resource listeners.rc
 
+## Initial setup
+0. 
+
 ## Post-exploitation
 0. agents
 0. autoruns autoruns.rc powershell

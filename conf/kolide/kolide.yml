@@ -10,5 +10,8 @@ server:
   tls: false
 auth:
   jwt_key: {{ kolide_jwt_key }}
+osquery:
+  result_log_file: /var/log/kolide/osquery_result.log
+  status_log_file: /var/log/kolide/osquery_status.log
 logging:
   json: true

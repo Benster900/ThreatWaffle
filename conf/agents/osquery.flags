@@ -20,3 +20,4 @@
 --logger_plugin=tls
 --logger_tls_endpoint=/api/v1/osquery/log
 --logger_tls_period=10
+--disabled_events=false

