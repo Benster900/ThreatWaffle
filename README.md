@@ -64,7 +64,10 @@ This repo contains two branches which are Doorman and Kolide. Both are open sour
     1. Setup through Kolide setup
 
 # Setup Graylog server
-
+0. vim group_vars/graylog and set
+    1. graylog_admin_password
+0. vim hosts and set [graylog]
+0. ansible-playbook -i hosts deploy_graylog.yml -u superadmin
 
 ## Deploy OSQuery agents
 ## Initial setup
