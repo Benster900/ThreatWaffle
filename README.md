@@ -28,22 +28,48 @@ This repo contains two branches which are Doorman and Kolide. Both are open sour
 0. Select “Users” on the left
 0. Select “Acton” then “New User”
     1. User info
-        2. Enter “Sherlock” for Firstname
-        2. Enter “Holmes” for Last Name
-        2. Enter “Sholmes” for logon
+        2. Enter "Bill" for Firstname
+        2. Enter "Gates" for Last Name
+        2. Enter “Bgates” for logon
     1. Password
         2. Enter a password for user
         2. UNcheck “User must change password at next logon”
 0. Shutdown and create snapshot
 
+## Setup DNS entrie
+0. Open Server Manager
+0. Select "Tools" then "DNS"
+0. WinDC > Forward Lookup Zone > hackinglab.beer
+0. Select "Action" then "New Host(A)"
+    1. Enter "graylog" for Name
+    1. Enter "<IP addr of Graylog>" for IP address
+    1. Repeat for Kolide
+
 ## Group policy settings
 ### Enable RDP through firewall
+0. Open Group policy manager
+0. Right-click "Default Domain Policy"
+0. Computer Configuration > Policies > Administrative Templates > Network > Network Connections > Windows Firewall > Domain Profile
+0. Enable "Allow inbound Remote Desktop exceptions" and set IP addresses to "<Network ID>/<CIDR>"
+0. Computer Configuration > Policies > Administrative Templates, Network > Network Connections > Windows Firewall > Domain Profile
+0. Enable "Windows Firewall: Allow inbound Remote Desktop exceptions"
 
 ### Powershell script block logging
+0. Computer Configuration > Policies > Administrative Templates -> Windows Components -> Windows PowerShell
+0. Enable "Turn on PowerShell Script Block Logging"
 
 ### Process creation logging
+0. Computer Configuration > Windows Settings > Security Settings > Advanced Audit Policy Configuration > Audit Policies > > Detailed Tracking
+0. Enable for successful "Audit Process Creation"
 
 ### SMB access via firewall
+0. Computer Configuration > Windows Settings > Security Settings > Windows Firewall with Advanced Security > Windows Firewall with Advanced Security LDAP
+0. Right-click "Inbound Rules" and select "New Rule"
+    1. Select "Port" for rule type
+    1. Select "TCP" for protocol and enter "445" for port
+    1. Select "Allow the connection"
+    1. Select all profiles
+    1. Enter "Allow PSexec" for name
 
 # Setup Kolide OSQuery fleet manager
 0. openssl rand -base64 32
@@ -102,9 +128,12 @@ Coming soon
 * Ubuntu Server 16.04 64-bit
 
 # Resources/Sources
-* https://github.com/kolide/fleet/tree/master/docs
-* https://github.com/kolide/fleet/blob/master/docs/infrastructure/adding-hosts-to-fleet.md
-
+* Kolide github: https://github.com/kolide/fleet/tree/master/docs
+* Kolide docs: https://github.com/kolide/fleet/blob/master/docs/infrastructure/adding-hosts-to-fleet.md
+* Remote Desktop - Group Policy : http://www.itprotoday.com/management-mobility/q-how-do-i-enable-remote-desktop-connections-windows-7-using-group-policy
+* Powershell script block logging - Group Policy: https://docs.microsoft.com/en-us/powershell/wmf/5.0/audit_script
+* Process creation auditing - Group Policy: http://www.itprotoday.com/security/understanding-and-enabling-command-line-auditing
+* Add SMB Firewall rule - Group Policy: https://4sysops.com/archives/force-remote-group-policy-refresh-with-psexec/
 
 To do:
 * Set up Mac OSX deployment
