@@ -1,8 +1,8 @@
 [kolide]
-10.140.100.175 ansible_python_interpreter=/usr/bin/python3 timeout=30
+10.140.100.196 ansible_python_interpreter=/usr/bin/python3 timeout=30
 
 [graylog]
-10.140.100.168 ansible_python_interpreter=/usr/bin/python3
+10.140.100.197 ansible_python_interpreter=/usr/bin/python3
 
 [windows]
 1.2.3.4
@@ -12,11 +12,11 @@ win_agents
 win_dc
 
 [win_dc]
-10.140.100.173
+10.140.100.204
 
 [win_agents]
-10.140.100.164
-10.140.100.177
+10.140.100.198
+10.140.100.199
 
 [linux_agents]
 

@@ -1,12 +1,17 @@
 ####################################################################
 #  Install/Setup Kolide
 ####################################################################
+- name: Create Kolide user
+  user:
+    name: kolide
+    shell: /usr/sbin/nologin
+    
 - name: Create Kolide log directory
   file:
     path: '{{ log_dir }}'
     state: directory
     owner: kolide
-    group: kolide
+    group: root
 
 - name: Create Kolide conf directory
   file:

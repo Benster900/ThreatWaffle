@@ -21,7 +21,7 @@ This repo contains two branches which are Doorman and Kolide. Both are open sour
 0. ansible-playbook -i hosts deploy_windows_dc.yml
 0. Shutdown and create snapshot
 
-## Setup domain user
+## Setup domain user(non-admin)
 0. Login into Windows DC
 0. Open server manager
 0. Select “Tools” then “Active Directory Users and Computers”
@@ -35,6 +35,15 @@ This repo contains two branches which are Doorman and Kolide. Both are open sour
         2. Enter a password for user
         2. UNcheck “User must change password at next logon”
 0. Shutdown and create snapshot
+
+## Group policy settings
+### Enable RDP through firewall
+
+### Powershell script block logging
+
+### Process creation logging
+
+### SMB access via firewall
 
 # Setup Kolide OSQuery fleet manager
 0. openssl rand -base64 32

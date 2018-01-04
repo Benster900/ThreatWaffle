@@ -18,6 +18,7 @@
   win_reboot:
   when: active_directory_controllers.reboot_required
 
+
 ####################################################################
 #  Slack notification
 ####################################################################

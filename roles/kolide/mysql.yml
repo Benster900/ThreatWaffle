@@ -19,15 +19,15 @@
 ####################################################################
 # Secure MySQL setup
 ####################################################################
-- name: delete anonymous MySQL server user
+- name: Delete anonymous MySQL server user
   action: mysql_user user="" host="{{ ansible_hostname }}" state="absent"
   ignore_errors: yes
 
-- name: delete anonymous MySQL server user for localhost
+- name: Delete anonymous MySQL server user for localhost
   action: mysql_user user="" state="absent"
   ignore_errors: yes
 
-- name: remove the MySQL test database
+- name: Remove the MySQL test database
   action: mysql_db db=test state=absent
   ignore_errors: yes
 
@@ -55,7 +55,7 @@
   register: mysql_result
   failed_when: "'database exists' in mysql_result.stdout"
 
-- name: Create Kolide user
+- name: Create Kolide database user
   mysql_user:
     name: '{{ mysql_kolide_user }}'
     password: '{{ mysql_kolide_pass }}'
