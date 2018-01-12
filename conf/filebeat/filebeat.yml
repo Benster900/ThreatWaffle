@@ -42,7 +42,8 @@ filebeat.prospectors:
 
   # Optional additional fields. These fields can be freely picked
   # to add additional information to the crawled log files for filtering
-  #fields:
+  fields:
+    tool: osquery
   #  level: debug
   #  review: 1
 
