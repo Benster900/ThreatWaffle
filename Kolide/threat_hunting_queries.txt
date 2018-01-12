@@ -1,0 +1,17 @@
+# Detect Mimikatz
+SELECT pm.path,pm.permissions,proc.name, pm.pid FROM process_memory_map as pm JOIN processes as proc WHERE (pm.path like '%cryptdll.dll' OR pm.path like '%hid.dll' OR pm.path like '%WinSCard.dll' OR pm.path like '%samlib.dll' OR pm.path like '%vaultcli.dll') AND pm.pid=proc.pid
+
+# Detect Powershell Empire
+SELECT proc.name, pm.pid, pm.path, pm.permissions FROM process_memory_map as pm JOIN processes as proc WHERE pm.pid=proc.pid and permissions='PAGE_EXECUTE_READWRITE';
+
+# Detect process injection
+SELECT pid, permissions, path FROM process_memory_map WHERE pid=(select pid from processes WHERE name='explorer.exe') and permissions='PAGE_EXECUTE_READWRITE';
+
+# Malicious tasks
+SELECT name, action, path, last_run_time, next_run_time, last_run_message FROM scheduled_tasks WHERE enabled=1 and hidden=1;
+
+# Maliciously spawned powershell prompts
+SELECT pid, parent, name, path, cmdline, uid, system_time, start_time  FROM processes where name='powershell.exe' and parent != (select pid from processes where name='explorer.exe');
+
+# Powershell process created
+SELECT datetime, source, provider_name, provider_guid, eventid, data FROM windows_events WHERE eventid=4688 and data like '%"NewProcessName":"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"%';

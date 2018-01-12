@@ -1,0 +1,72 @@
+{
+  "schedule": {
+    "file_events": {
+      "query": "SELECT * FROM file_events;",
+      "interval": 300,
+      "removed": false
+    }
+  },
+  "options": {
+    "disable_distributed": false,
+    "distributed_interval": 10,
+    "distributed_plugin": "tls",
+    "distributed_tls_max_attempts": 3,
+    "distributed_tls_read_endpoint": "/api/v1/osquery/distributed/read",
+    "distributed_tls_write_endpoint": "/api/v1/osquery/distributed/write",
+    "logger_plugin": "tls",
+    "logger_tls_endpoint": "/api/v1/osquery/log",
+    "logger_tls_period": 10,
+    "pack_delimiter": "/"
+  },
+  "decorators": {
+    "load": [
+      "SELECT uuid AS host_uuid FROM system_info;",
+      "SELECT hostname AS hostname FROM system_info;"
+    ]
+  },
+  "packs": {
+    "Threat hunting pack": {
+      "queries": {
+        "Detect Mimikatz": {
+          "query": "SELECT pm.path,pm.permissions,proc.name, pm.pid FROM process_memory_map as pm JOIN processes as proc WHERE (pm.path like '%cryptdll.dll' OR pm.path like '%hid.dll' OR pm.path like '%
+WinSCard.dll' OR pm.path like '%samlib.dll' OR pm.path like '%vaultcli.dll') AND pm.pid=proc.pid",
+          "interval": 300,
+          "platform": "windows",
+          "version": ""
+        },
+        "Detect Powershell Empire": {
+          "query": "SELECT proc.name, pm.pid, pm.path, pm.permissions FROM process_memory_map as pm JOIN processes as proc WHERE pm.pid=proc.pid and permissions='PAGE_EXECUTE_READWRITE';",
+          "interval": 300,
+          "platform": "windows",
+          "version": ""
+        },
+        "Detect process injection": {
+          "query": "SELECT pid, permissions, path FROM process_memory_map WHERE pid=(select pid from processes WHERE name='explorer.exe') and permissions='PAGE_EXECUTE_READWRITE';",
+          "interval": 300,
+          "platform": "windows",
+          "version": ""
+        },
+        "Malicious scheduled tasks": {
+          "query": "SELECT name, action, path, last_run_time, next_run_time, last_run_message FROM scheduled_tasks WHERE enabled=1 and hidden=1;",
+          "interval": 300,
+          "platform": "windows",
+          "version": ""
+        },
+        "Maliciously spawned Powershell prompts": {
+          "query": "SELECT pid, parent, name, path, cmdline, uid, system_time, start_time  FROM processes where name='powershell.exe' and parent != (select pid from processes where name='explorer.exe');
+",
+          "interval": 300,
+          "platform": "windows",
+          "version": ""
+        },
+        "Powershell processes created": {
+          "query": "SELECT datetime, source, provider_name, provider_guid, eventid, data FROM windows_events WHERE eventid=4688 and data like '%\"NewProcessName\":\"C:\\\\Windows\\\\System32\\\\WindowsP
+owerShell\\\\v1.0\\\\powershell.exe\"%';",
+          "interval": 300,
+          "platform": "windows",
+          "version": ""
+        }
+      }
+    }
+  }
+}
