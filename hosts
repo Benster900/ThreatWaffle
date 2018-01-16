@@ -4,6 +4,9 @@
 [graylog]
 10.140.100.168 ansible_python_interpreter=/usr/bin/python3
 
+[caldera]
+172.16.77.130 ansible_python_interpreter=/usr/bin/python3 timeout=30
+
 [windows]
 1.2.3.4
 

@@ -83,20 +83,25 @@ This repo contains two branches which are Doorman and Kolide. Both are open sour
     1. Add hosts to linux_agents
 0.ansible-playbook -i hosts deploy_linux_osquery_agents.yml
 
-## Deploy Mac OSX OSQuery agents
-Coming soon
+## Ansible setup - prod
+0. vim hosts and set [caldera]
+0. mv group_vars/all.example group_vars/all
+0. vim group_vars/all and set:
+    1. base_domain
+    1. caldera_pass
+0. Create a DNS entry on your DNS server for {{ caldera_pass }}.{{ base_domain }}
+0. ansible-playbook -i hosts deploy_caldera.yml -u <user>
 
 ## Ansible Kolide OS support
 * Ubuntu Server 16.04 64-bit
+
 
 # Resources/Sources
 * https://github.com/kolide/fleet/tree/master/docs
 * https://github.com/kolide/fleet/blob/master/docs/infrastructure/adding-hosts-to-fleet.md
 
 
-To do:
-* Set up Mac OSX deployment
+# To do:
+* Set up Mac OSX deployment for OSQuery
 * Docker setup
 * Add DNS setup to DC
-* Setup log OSQuery agent logging
-* Forward OSQuery logs to Graylog
