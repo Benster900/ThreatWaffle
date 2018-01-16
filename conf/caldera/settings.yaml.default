@@ -1,0 +1,15 @@
+crypto:
+  cert: ''
+  key: ''
+server:
+  host: 127.0.0.1
+  https: false
+  port: 8888
+users:
+- name: {{ caldera_user }}
+  password: {{ caldera_pass }}
+proxy:
+  default:
+    cert: ''
+    http: ''
+    https: ''
